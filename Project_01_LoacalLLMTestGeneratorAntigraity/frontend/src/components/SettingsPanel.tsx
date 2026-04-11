@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './SettingsPanel.css';
 
 const SettingsPanel: React.FC = () => {
@@ -12,6 +12,17 @@ const SettingsPanel: React.FC = () => {
     lmStudioUrl: 'http://localhost:1234/v1',
     activeProvider: 'ollama'
   });
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.config) {
+          setModelSettings(data.config);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const [testStatus, setTestStatus] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
 
