@@ -6,9 +6,10 @@ import * as mammoth from 'mammoth';
 let activeConfigs = {
   ollamaUrl: 'http://localhost:5173',
   ollamaModel: 'llama3.2',
-  activeProvider: 'ollama' as 'ollama' | 'lmstudio' | 'openai' | 'claude' | 'gemini' | 'grok',
+  activeProvider: 'ollama' as 'ollama' | 'lmstudio' | 'openai' | 'claude' | 'gemini' | 'grok' | 'groq',
   lmStudioUrl: 'http://localhost:1234/v1',
   grokKey: '',
+  groqKey: '',
   openAiKey: '',
   claudeKey: '',
   geminiKey: ''

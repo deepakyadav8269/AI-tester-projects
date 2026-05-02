@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 interface LLMConfig {
-  activeProvider: 'ollama' | 'lmstudio' | 'openai' | 'claude' | 'gemini' | 'grok';
+  activeProvider: 'ollama' | 'lmstudio' | 'openai' | 'claude' | 'gemini' | 'grok' | 'groq';
   ollamaUrl?: string;
   ollamaModel?: string;
   lmStudioUrl?: string;
@@ -9,6 +9,7 @@ interface LLMConfig {
   claudeKey?: string;
   geminiKey?: string;
   grokKey?: string;
+  groqKey?: string;
 }
 
 export class LLMService {
@@ -40,6 +41,12 @@ export class LLMService {
               headers: { Authorization: `Bearer ${this.config.grokKey}` }
            });
            return { success: true, message: 'Connected to Grok API' };
+
+        case 'groq':
+           await axios.get('https://api.groq.com/openai/v1/models', {
+              headers: { Authorization: `Bearer ${this.config.groqKey}` }
+           });
+           return { success: true, message: 'Connected to Groq API' };
 
         case 'gemini':
             await axios.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${this.config.geminiKey}`);
@@ -102,6 +109,18 @@ export class LLMService {
             });
             return res.data.choices[0].message.content;
         }
+        case 'groq': {
+            const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+                ]
+            }, {
+                headers: { Authorization: `Bearer ${this.config.groqKey}` }
+            });
+            return res.data.choices[0].message.content;
+        }
         case 'gemini': {
              const res = await axios.post(
                  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${this.config.geminiKey}`,
@@ -136,7 +155,16 @@ export class LLMService {
       console.error(e);
       if (e.response?.data) {
         const errData = e.response.data;
-        const errMsg = errData.error || errData.message || JSON.stringify(errData);
+        let errMsg = '';
+        if (errData.error && errData.error.message) {
+            errMsg = errData.error.message;
+        } else if (typeof errData.error === 'string') {
+            errMsg = errData.error;
+        } else if (errData.message) {
+            errMsg = errData.message;
+        } else {
+            errMsg = JSON.stringify(errData);
+        }
         
         // Friendly OOM error for local models
         if (typeof errMsg === 'string' && (errMsg.includes('allocate CUDA') || errMsg.includes('out of memory') || errMsg.includes('loading model'))) {

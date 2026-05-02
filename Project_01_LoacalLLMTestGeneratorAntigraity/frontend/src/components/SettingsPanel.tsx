@@ -6,6 +6,7 @@ const SettingsPanel: React.FC = () => {
     ollamaUrl: 'http://localhost:11434',
     ollamaModel: 'llama3.2',
     grokKey: '',
+    groqKey: '',
     openAiKey: '',
     claudeKey: '',
     geminiKey: '',
@@ -91,6 +92,7 @@ const SettingsPanel: React.FC = () => {
             <option value="claude">Anthropic Claude</option>
             <option value="gemini">Google Gemini</option>
             <option value="grok">xAI Grok</option>
+            <option value="groq">Groq</option>
           </select>
         </div>
 
@@ -153,6 +155,17 @@ const SettingsPanel: React.FC = () => {
               value={modelSettings.grokKey} 
               onChange={handleChange} 
               placeholder="xai-..."
+              className="styled-input"
+            />
+          </div>
+          <div className="setting-group">
+            <label>Groq API Key</label>
+            <input 
+              type="password" 
+              name="groqKey" 
+              value={modelSettings.groqKey} 
+              onChange={handleChange} 
+              placeholder="gsk_..."
               className="styled-input"
             />
           </div>

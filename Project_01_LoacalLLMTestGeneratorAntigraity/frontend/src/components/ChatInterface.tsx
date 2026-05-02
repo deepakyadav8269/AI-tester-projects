@@ -35,8 +35,9 @@ const ChatInterface: React.FC = () => {
       margin: 0.5,
       filename: `AI_TestCases_${id || activeTest?.id || 'export'}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' as const }
+      html2canvas: { scale: 2, useCORS: true, windowWidth: element.scrollWidth },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' as const },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
     
     html2pdf().set(opt).from(element).save();
@@ -45,7 +46,21 @@ const ChatInterface: React.FC = () => {
   const exportToDocx = (id?: string) => {
     if (!contentRef.current) return;
     
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word Document</title><style>table { width: 100%; border-collapse: collapse; margin-top: 20px; } th, td { border: 1px solid #ccc; padding: 8px; text-align: left; } th { background: #e0f2fe; color: #1e40af; } tr:nth-child(even) { background: #f8fafc; }</style></head><body>";
+    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Export HTML to Word Document</title>
+        <style>
+          body { font-family: Arial, sans-serif; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; word-wrap: break-word; }
+          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+          th { background-color: #e0f2fe; color: #1e40af; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f8fafc; }
+          tr { page-break-inside: avoid; }
+          @page { size: 11in 8.5in; mso-page-orientation: landscape; margin: 0.5in; }
+        </style>
+      </head>
+      <body>`;
     const footer = "</body></html>";
     const sourceHTML = header + contentRef.current.innerHTML + footer;
     
@@ -133,17 +148,7 @@ const ChatInterface: React.FC = () => {
 
       setHistory(prev => prev.map(t => t.id === currentTest!.id ? updatedTest : t));
       setActiveTest(updatedTest);
-      
-      if (data.success) {
-        setTimeout(() => {
-          const lowerReq = reqText.toLowerCase();
-          if (lowerReq.includes('pdf')) {
-            exportToPDF(currentTest!.id);
-          } else if (lowerReq.includes('doc') || lowerReq.includes('word')) {
-            exportToDocx(currentTest!.id);
-          }
-        }, 500);
-      }
+
     } catch (err: any) {
       const errorTest = { ...currentTest, content: currentTest.content + `\n\nNetwork Error: ${err.message}` };
       setHistory(prev => prev.map(t => t.id === currentTest!.id ? errorTest : t));
@@ -189,6 +194,13 @@ const ChatInterface: React.FC = () => {
                   {activeTest.content}
                 </ReactMarkdown>
               </div>
+              
+              {!isGenerating && activeTest.content && !activeTest.content.includes('Provider Error') && !activeTest.content.startsWith('Error:') && (
+                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }} onClick={() => exportToPDF(activeTest.id)}>📄 Export PDF</button>
+                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }} onClick={() => exportToDocx(activeTest.id)}>📝 Export Word</button>
+                </div>
+              )}
               
               {isGenerating && activeTest.content && (
                 <div style={{ marginTop: '2rem', padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)' }}>
